@@ -87,6 +87,8 @@ def make_parser():
          'be empty (but present). If you\'re connected, but the pings aren\'t going through the '
          'wifi connection, the SSID will be empty but the MAC will be the address of whatever '
          'device you\'re actually using (like an Ethernet switch).')
+  opts['log_time_human'] = parser.add_argument('-x', '--log_time_human', action='store_true',
+    help='Print time in a human readable form in logfile.')
   opts['data_dir'] = parser.add_argument('-d', '--data-dir', metavar='DIRNAME', type=os.path.abspath,
     help='The directory where data will be stored. History data will be kept in DIRNAME/'
          +HISTORY_FILENAME+', the status display will be in DIRNAME/'+STATUS_FILENAME+', and '
@@ -198,7 +200,7 @@ def main():
 
     # Log result.
     if args.logfile:
-      log(args.logfile, result, now, intercepted=intercepted, method=args.method)
+      log(args.logfile, result, now, intercepted=intercepted, method=args.method, log_time_human=args.log_time_human)
 
     # Write new history back to file.
     if os.path.exists(history_file) and not os.path.isfile(history_file):
@@ -532,7 +534,7 @@ def write_history(history_file, history):
       filehandle.write("{}\t{}\n".format(timestamp, status))
 
 
-def log(logfile, result, now, intercepted=None, method=None):
+def log(logfile, result, now, intercepted=None, method=None, log_time_human=False):
   """Log the result of the ping to the given log file.
   Writes the ping milliseconds ("result"), current timestamp ("now"), wifi SSID,
   and wifi MAC address as separate columns in a line appended to the file.
@@ -548,7 +550,10 @@ def log(logfile, result, now, intercepted=None, method=None):
     columns = [0, now, ssid, mac, method]
   else:
     columns = [result, now, ssid, mac, method]
-  line = "\t".join(map(format_value, columns))+'\n'
+  line = "\t".join(map(format_value, columns))
+  if log_time_human:
+    line += "\t%s" % time.asctime(time.localtime(now))
+  line += '\n'
   with open(logfile, 'a') as filehandle:
     filehandle.write(line)
 
